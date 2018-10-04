@@ -38,6 +38,10 @@ contract('BorrowerApp', function (accounts) {
       });
     });
 
+    it('reverts on adding borrower app with blank name', async function () {
+      await borrowerApp.add(someBorrowerApp.id, '').should.be.rejectedWith('borrower app name cannot be null');
+    });
+
     it('reverts on adding borrower app by non owner', async function () {
       await borrowerApp.add(someBorrowerApp.id, someBorrowerApp.name, { from: nonOwner }).should.be.rejectedWith('revert');
     });
@@ -67,6 +71,15 @@ contract('BorrowerApp', function (accounts) {
       await borrowerApp.size().should.eventually.be.bignumber.equal(borrowerApps.length);
     });
 
+    it('gets all registered borrower app ids', async function () {
+      await borrowerApp.getIds().should.eventually.be.empty;
+
+      // get borrower app ids after two borrower apps are registered
+      await borrowerApp.add(someBorrowerApp.id, someBorrowerApp.name);
+      await borrowerApp.add(otherBorrowerApp.id, otherBorrowerApp.name);
+      await borrowerApp.getIds().should.eventually.have.bignumber.ordered.members([someBorrowerApp.id, otherBorrowerApp.id]);
+    });
+
     it('reverts on getting unregistered borrower app', async function () {
       await borrowerApp.get(someBorrowerApp.id).should.be.rejectedWith('borrower app not found');
       await borrowerApp.getByIndex(0).should.be.rejectedWith('borrower app index out of range');
@@ -78,10 +91,14 @@ contract('BorrowerApp', function (accounts) {
     });
   });
 
-  describe('Modification', async function () {
+  describe('Modify', async function () {
     it('updates name of the registered borrwer app', async function () {
       await borrowerApp.add(someBorrowerApp.id, someBorrowerApp.name).should.be.fulfilled;
       await borrowerApp.update(someBorrowerApp.id, someBorrowerApp.name).should.be.fulfilled;
+    });
+
+    it('reverts on updating borrower app with blank name', async function () {
+      await borrowerApp.update(someBorrowerApp.id, '').should.be.rejectedWith('borrower app name cannot be null');
     });
 
     it('reverts on updating unregistered borrower app', async function () {
