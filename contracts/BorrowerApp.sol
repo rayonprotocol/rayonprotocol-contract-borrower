@@ -7,6 +7,7 @@ contract BorrowerApp is RayonBase {
         address id;
         string name;
         uint256 index;
+        uint256 updatedTime;
     }
 
     mapping(address => BorrowerAppEntry) internal borrowerAppMap;
@@ -21,23 +22,24 @@ contract BorrowerApp is RayonBase {
 
     function add(address _id, string _name) public onlyOwner {
         BorrowerAppEntry storage entry = borrowerAppMap[_id];
+        require(bytes(_name).length > 0, "borrower app name cannot be null");
         require(!_contains(entry), "borrower app already registered");
-
         entry.id = _id;
         entry.name = _name;
         entry.index = borrowerAppList.push(_id) - 1;
+        entry.updatedTime = block.timestamp;
 
         emit LogBorrowerAppAdded(_id);
     }
 
-    function get(address _id) public view returns (address, string){
+    function get(address _id) public view returns (address, string, uint256){
         BorrowerAppEntry storage entry = borrowerAppMap[_id];
         require(_contains(entry), "borrower app not found");
 
-        return (entry.id, entry.name);
+        return (entry.id, entry.name, entry.updatedTime);
     }
 
-    function getByIndex(uint256 _index) public view onlyOwner returns (address, string){
+    function getByIndex(uint256 _index) public view onlyOwner returns (address, string, uint256){
         require(_isInRange(_index), "borrower app index out of range");
 
         address id = borrowerAppList[_index];
@@ -53,6 +55,7 @@ contract BorrowerApp is RayonBase {
         require(bytes(_name).length > 0, "borrower app name cannot be null");
         require(_contains(entry), "borrower app not found");
         entry.name = _name;
+        entry.updatedTime = block.timestamp;
         emit LogBorrowerAppUpdated(_id);
     }
 

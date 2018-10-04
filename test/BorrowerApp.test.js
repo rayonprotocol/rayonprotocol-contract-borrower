@@ -1,10 +1,13 @@
 import eventsIn from './helpers/eventsIn';
+import assertwithinTimeTolerance from './helpers/assertwithinTimeTolerance';
+import { latestTime } from 'openzeppelin-solidity/test/helpers/latestTime';
 const BorrowerApp = artifacts.require('./BorrowerApp.sol');
 const BigNumber = web3.BigNumber;
 
 require('chai')
   .use(require('chai-bignumber')(BigNumber))
   .use(require('chai-as-promised'))
+  .use(assertwithinTimeTolerance)
   .should();
 
 const contractVersion = 1;
@@ -49,17 +52,25 @@ contract('BorrowerApp', function (accounts) {
 
   describe('Retrieve', async function () {
     it('gets registered borrower app with id', async function () {
-      await borrowerApp.add(someBorrowerApp.id, someBorrowerApp.name).should.be.fulfilled;
-      const [someBorrowerAppId, someBorrowerAppName] = await borrowerApp.get(someBorrowerApp.id);
+      const [currentTime] = await Promise.all([
+        latestTime(),
+        borrowerApp.add(someBorrowerApp.id, someBorrowerApp.name).should.be.fulfilled,
+      ]);
+      const [someBorrowerAppId, someBorrowerAppName, someBorrowerAppUpdatedTime] = await borrowerApp.get(someBorrowerApp.id);
       someBorrowerAppId.should.be.equal(someBorrowerApp.id);
       someBorrowerAppName.should.be.equal(someBorrowerApp.name);
+      someBorrowerAppUpdatedTime.should.be.withinTimeTolerance(currentTime);
     });
 
     it('gets registered borrower app with index', async function () {
-      await borrowerApp.add(someBorrowerApp.id, someBorrowerApp.name).should.be.fulfilled;
-      const [someBorrowerAppId, someBorrowerAppName] = await borrowerApp.getByIndex(0);
+      const [currentTime] = await Promise.all([
+        latestTime(),
+        borrowerApp.add(someBorrowerApp.id, someBorrowerApp.name).should.be.fulfilled,
+      ]);
+      const [someBorrowerAppId, someBorrowerAppName, someBorrowerAppUpdatedTime] = await borrowerApp.getByIndex(0);
       someBorrowerAppId.should.be.equal(someBorrowerApp.id);
       someBorrowerAppName.should.be.equal(someBorrowerApp.name);
+      someBorrowerAppUpdatedTime.should.be.withinTimeTolerance(currentTime);
     });
 
     it('gets how many borrower apps are registered', async function () {
