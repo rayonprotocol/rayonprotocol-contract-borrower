@@ -4,7 +4,7 @@ This is a borrower app contract of RayonProtocol
 
 ## About
 ### Architecture
-  - BorrowerApp: contract that manages borrower app which 
+  - BorrowerApp: contract that manages borrower app 
   - Borrower - contract that manage borrower
 
 ## Getting Started
