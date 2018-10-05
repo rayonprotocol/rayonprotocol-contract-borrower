@@ -17,11 +17,11 @@ contract('BorrowerApp', function (accounts) {
   let borrowerApp;
   const someBorrowerApp = {
     id: someBorrowerAppAdress,
-    name: 'BORROWER1',
+    name: 'BORROWERAPP1',
   };
   const otherBorrowerApp = {
     id: otherBorrowerAppAdress,
-    name: 'BORROWER2',
+    name: 'BORROWERAPP2',
   };
 
   beforeEach(async function () {
@@ -51,7 +51,7 @@ contract('BorrowerApp', function (accounts) {
   });
 
   describe('Retrieve', async function () {
-    it('gets registered borrower app with id', async function () {
+    it('returns registered borrower app with id', async function () {
       const [currentTime] = await Promise.all([
         latestTime(),
         borrowerApp.add(someBorrowerApp.id, someBorrowerApp.name).should.be.fulfilled,
@@ -62,7 +62,7 @@ contract('BorrowerApp', function (accounts) {
       someBorrowerAppUpdatedTime.should.be.withinTimeTolerance(currentTime);
     });
 
-    it('gets registered borrower app with index', async function () {
+    it('returns registered borrower app with index', async function () {
       const [currentTime] = await Promise.all([
         latestTime(),
         borrowerApp.add(someBorrowerApp.id, someBorrowerApp.name).should.be.fulfilled,
@@ -73,16 +73,16 @@ contract('BorrowerApp', function (accounts) {
       someBorrowerAppUpdatedTime.should.be.withinTimeTolerance(currentTime);
     });
 
-    it('gets how many borrower apps are registered', async function () {
-      await borrowerApp.size().should.eventually.be.bignumber.equal(0);
+    it('returns how many borrower apps are registered', async function () {
+      (await borrowerApp.size()).should.be.bignumber.equal(0);
 
-      // get size after two borrower apps are registered
+      // get the count of borrower apps after two borrower apps are registered
       const borrowerApps = [someBorrowerApp, otherBorrowerApp];
       await Promise.all(borrowerApps.map(({ id, name }) => borrowerApp.add(id, name)));
-      await borrowerApp.size().should.eventually.be.bignumber.equal(borrowerApps.length);
+      (await borrowerApp.size()).should.be.bignumber.equal(borrowerApps.length);
     });
 
-    it('gets all registered borrower app ids', async function () {
+    it('returns all registered borrower app ids', async function () {
       await borrowerApp.getIds().should.eventually.be.empty;
 
       // get borrower app ids after two borrower apps are registered

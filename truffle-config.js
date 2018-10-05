@@ -16,7 +16,7 @@ const {
 const getProvider = (
   providerUrl,
   addressIndex = 0,
-  numAddresses = 5
+  numAddresses = 10
 ) => !useSolcover
   ? () => new HDWalletProvider(isTest ? testMnemonic : mnemonic, providerUrl, addressIndex, numAddresses)
   : undefined; // https://github.com/sc-forks/solidity-coverage/blob/master/docs/faq.md#using-alongside-hdwalletprovider
