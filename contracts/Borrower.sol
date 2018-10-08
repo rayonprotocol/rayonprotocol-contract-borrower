@@ -96,7 +96,7 @@ contract Borrower is RayonBase {
     }
 
     function getByIndex(uint256 _index) public view onlyOwner returns (address){
-        require(_isInRange(_index), "borrower index out of range");
+        require(_isInRange(_index), "Borrower index is out of range");
 
         address id = borrowerList[_index];
         return get(id);
