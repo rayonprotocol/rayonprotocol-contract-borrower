@@ -13,8 +13,13 @@ require('chai')
 const contractVersion = 1;
 
 contract('BorrowerApp', function (accounts) {
-  const [owner, nonOwner, someBorrowerAppAdress, otherBorrowerAppAdress] = accounts;
+  const [,
+    someBorrowerAppAdress, otherBorrowerAppAdress,
+    nonOwner, owner,
+  ] = accounts;
+
   let borrowerApp;
+
   const someBorrowerApp = {
     id: someBorrowerAppAdress,
     name: 'BORROWERAPP1',
@@ -29,7 +34,7 @@ contract('BorrowerApp', function (accounts) {
   });
 
   describe('Register', async function () {
-    it('add borrower app', async function () {
+    it('adds borrower app', async function () {
       await borrowerApp.add(someBorrowerApp.id, someBorrowerApp.name, { from: owner }).should.be.fulfilled;
     });
 
@@ -42,7 +47,12 @@ contract('BorrowerApp', function (accounts) {
     });
 
     it('reverts on adding borrower app with blank name', async function () {
-      await borrowerApp.add(someBorrowerApp.id, '').should.be.rejectedWith('borrower app name cannot be null');
+      await borrowerApp.add(someBorrowerApp.id, '', { from: owner }).should.be.rejectedWith('Borrower app name cannot be null');
+    });
+
+    it('reverts on adding registered borrower app ', async function () {
+      await borrowerApp.add(someBorrowerApp.id, someBorrowerApp.name, { from: owner }).should.be.fulfilled;
+      await borrowerApp.add(someBorrowerApp.id, someBorrowerApp.name, { from: owner }).should.be.rejectedWith('Borrower app already registered');
     });
 
     it('reverts on adding borrower app by non owner', async function () {
@@ -51,10 +61,10 @@ contract('BorrowerApp', function (accounts) {
   });
 
   describe('Retrieve', async function () {
-    it('returns registered borrower app with id', async function () {
+    it('gets registered borrower app on request with id', async function () {
       const [currentTime] = await Promise.all([
         latestTime(),
-        borrowerApp.add(someBorrowerApp.id, someBorrowerApp.name).should.be.fulfilled,
+        borrowerApp.add(someBorrowerApp.id, someBorrowerApp.name, { from: owner }).should.be.fulfilled,
       ]);
       const [someBorrowerAppId, someBorrowerAppName, someBorrowerAppUpdatedTime] = await borrowerApp.get(someBorrowerApp.id);
       someBorrowerAppId.should.be.equal(someBorrowerApp.id);
@@ -62,38 +72,38 @@ contract('BorrowerApp', function (accounts) {
       someBorrowerAppUpdatedTime.should.be.withinTimeTolerance(currentTime);
     });
 
-    it('returns registered borrower app with index', async function () {
+    it('gets registered borrower app with index', async function () {
       const [currentTime] = await Promise.all([
         latestTime(),
-        borrowerApp.add(someBorrowerApp.id, someBorrowerApp.name).should.be.fulfilled,
+        borrowerApp.add(someBorrowerApp.id, someBorrowerApp.name, { from: owner }).should.be.fulfilled,
       ]);
-      const [someBorrowerAppId, someBorrowerAppName, someBorrowerAppUpdatedTime] = await borrowerApp.getByIndex(0);
+      const [someBorrowerAppId, someBorrowerAppName, someBorrowerAppUpdatedTime] = await borrowerApp.getByIndex(0, { from: owner });
       someBorrowerAppId.should.be.equal(someBorrowerApp.id);
       someBorrowerAppName.should.be.equal(someBorrowerApp.name);
       someBorrowerAppUpdatedTime.should.be.withinTimeTolerance(currentTime);
     });
 
-    it('returns how many borrower apps are registered', async function () {
-      (await borrowerApp.size()).should.be.bignumber.equal(0);
+    it('gets how many borrower apps are registered', async function () {
+      (await borrowerApp.size({ from: owner })).should.be.bignumber.equal(0);
 
       // get the count of borrower apps after two borrower apps are registered
       const borrowerApps = [someBorrowerApp, otherBorrowerApp];
-      await Promise.all(borrowerApps.map(({ id, name }) => borrowerApp.add(id, name)));
-      (await borrowerApp.size()).should.be.bignumber.equal(borrowerApps.length);
+      await Promise.all(borrowerApps.map(({ id, name }) => borrowerApp.add(id, name, { from: owner })));
+      (await borrowerApp.size({ from: owner })).should.be.bignumber.equal(borrowerApps.length);
     });
 
-    it('returns all registered borrower app ids', async function () {
-      await borrowerApp.getIds().should.eventually.be.empty;
+    it('gets all registered borrower app ids', async function () {
+      await borrowerApp.getIds({ from: owner }).should.eventually.be.empty;
 
       // get borrower app ids after two borrower apps are registered
-      await borrowerApp.add(someBorrowerApp.id, someBorrowerApp.name);
-      await borrowerApp.add(otherBorrowerApp.id, otherBorrowerApp.name);
-      await borrowerApp.getIds().should.eventually.have.bignumber.ordered.members([someBorrowerApp.id, otherBorrowerApp.id]);
+      await borrowerApp.add(someBorrowerApp.id, someBorrowerApp.name, { from: owner });
+      await borrowerApp.add(otherBorrowerApp.id, otherBorrowerApp.name, { from: owner });
+      await borrowerApp.getIds({ from: owner }).should.eventually.have.bignumber.ordered.members([someBorrowerApp.id, otherBorrowerApp.id]);
     });
 
     it('reverts on getting unregistered borrower app', async function () {
-      await borrowerApp.get(someBorrowerApp.id).should.be.rejectedWith('borrower app not found');
-      await borrowerApp.getByIndex(0).should.be.rejectedWith('borrower app index out of range');
+      await borrowerApp.get(someBorrowerApp.id).should.be.rejectedWith('Borrower app is not found');
+      await borrowerApp.getByIndex(0, { from: owner }).should.be.rejectedWith('Borrower app index is out of range');
     });
 
     it('reverts on getting borrower app by non owner', async function () {
@@ -104,16 +114,16 @@ contract('BorrowerApp', function (accounts) {
 
   describe('Modify', async function () {
     it('updates name of the registered borrwer app', async function () {
-      await borrowerApp.add(someBorrowerApp.id, someBorrowerApp.name).should.be.fulfilled;
-      await borrowerApp.update(someBorrowerApp.id, someBorrowerApp.name).should.be.fulfilled;
+      await borrowerApp.add(someBorrowerApp.id, someBorrowerApp.name, { from: owner }).should.be.fulfilled;
+      await borrowerApp.update(someBorrowerApp.id, someBorrowerApp.name, { from: owner }).should.be.fulfilled;
     });
 
     it('reverts on updating borrower app with blank name', async function () {
-      await borrowerApp.update(someBorrowerApp.id, '').should.be.rejectedWith('borrower app name cannot be null');
+      await borrowerApp.update(someBorrowerApp.id, '', { from: owner }).should.be.rejectedWith('Borrower app name cannot be null');
     });
 
     it('reverts on updating unregistered borrower app', async function () {
-      await borrowerApp.update(someBorrowerApp.id, someBorrowerApp.name).should.be.rejectedWith('borrower app not found');
+      await borrowerApp.update(someBorrowerApp.id, someBorrowerApp.name, { from: owner }).should.be.rejectedWith('Borrower app is not found');
     });
 
     it('reverts on updating borrower app by non owner', async function () {

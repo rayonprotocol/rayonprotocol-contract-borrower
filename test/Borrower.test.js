@@ -12,7 +12,12 @@ require('chai')
 const contractVersion = 1;
 
 contract('Borrower', function (accounts) {
-  const [owner, someBorrowerAppAdress, otherBorrowerAppAdress, borrowerAddress, nonOwner] = accounts;
+  const [,
+    someBorrowerAppAdress, otherBorrowerAppAdress,
+    borrowerAddress, otherBorrowerAddress,
+    nonOwner, owner,
+  ] = accounts;
+
   let borrower;
 
   const someBorrowerApp = {
@@ -20,6 +25,7 @@ contract('Borrower', function (accounts) {
     name: 'BORROWERAPP1',
   };
 
+  // this signature is signed by borrowerAddress (m/44'/60'/0'/0/3)
   const someBorrowerSignature = {
     borrowerAppId: someBorrowerAppAdress,
     v: 27,
@@ -27,13 +33,12 @@ contract('Borrower', function (accounts) {
     s: '0x4034998569cef0e5b1dea1636af25df0a78938d37563725d8974b5fc47445630',
   };
 
-  const otherBorrowerAddress = nonOwner;
-
   const otherBorrowerApp = {
     id: otherBorrowerAppAdress,
     name: 'BORROWERAPP2',
   };
 
+  // this signature is signed by otherBorrowerAddress (m/44'/60'/0'/0/4)
   const otherBorrowerSignature = {
     borrowerAppId: otherBorrowerApp.id,
     v: 27,
@@ -45,10 +50,10 @@ contract('Borrower', function (accounts) {
     borrower = await Borrower.new(contractVersion, { from: owner });
   });
 
-  describe('Auth Relationship', async function () {
+  describe('Auth Reference', async function () {
     it('sets Auth contract', async function () {
       const authApp = await Auth.new(contractVersion, { from: owner });
-      await borrower.setAuthContractAddress(authApp.address).should.be.fulfilled;
+      await borrower.setAuthContractAddress(authApp.address, { from: owner }).should.be.fulfilled;
     });
 
     it('reverts on setting Auth contract by non owner', async function () {
@@ -56,23 +61,23 @@ contract('Borrower', function (accounts) {
       await borrower.setAuthContractAddress(authApp.address, { from: nonOwner }).should.be.rejectedWith('revert');
     });
 
-    it('returns 0 for Auth contract address as initial value', async function () {
-      const authAppAddress = await borrower.getAuthContractAddress();
+    it('gets 0 for Auth contract address as initial value', async function () {
+      const authAppAddress = await borrower.getAuthContractAddress({ from: owner });
       authAppAddress.should.be.bignumber.equal(0);
     });
 
-    it('returns Auth contract address after set', async function () {
+    it('gets Auth contract address after set', async function () {
       const authApp = await Auth.new(contractVersion, { from: owner });
-      await borrower.setAuthContractAddress(authApp.address).should.be.fulfilled;
-      const authAppAddress = await borrower.getAuthContractAddress();
+      await borrower.setAuthContractAddress(authApp.address, { from: owner }).should.be.fulfilled;
+      const authAppAddress = await borrower.getAuthContractAddress({ from: owner });
       authAppAddress.should.be.bignumber.equal(authApp.address);
     });
   });
 
-  describe('BorrowerApp Relationship', async function () {
+  describe('BorrowerApp Reference', async function () {
     it('sets BorrowerApp contract', async function () {
       const borrowerApp = await BorrowerApp.new(contractVersion, { from: owner });
-      await borrower.setBorrowerAppContractAddress(borrowerApp.address).should.be.fulfilled;
+      await borrower.setBorrowerAppContractAddress(borrowerApp.address, { from: owner }).should.be.fulfilled;
     });
 
     it('reverts on setting BorrowerApp contract by non owner', async function () {
@@ -80,15 +85,15 @@ contract('Borrower', function (accounts) {
       await borrower.setBorrowerAppContractAddress(borrowerApp.address, { from: nonOwner }).should.be.rejectedWith('revert');
     });
 
-    it('returns 0 for BorrowerApp contract address as initial value', async function () {
-      const borrowerAppAddress = await borrower.getBorrowerAppContractAddress();
+    it('gets 0 for BorrowerApp contract address as initial value', async function () {
+      const borrowerAppAddress = await borrower.getBorrowerAppContractAddress({ from: owner });
       borrowerAppAddress.should.be.bignumber.equal(0);
     });
 
-    it('returns BorrowerApp contract address after set', async function () {
+    it('gets BorrowerApp contract address after set', async function () {
       const borrowerApp = await BorrowerApp.new(contractVersion, { from: owner });
-      await borrower.setBorrowerAppContractAddress(borrowerApp.address).should.be.fulfilled;
-      const borrowerAppAddress = await borrower.getBorrowerAppContractAddress();
+      await borrower.setBorrowerAppContractAddress(borrowerApp.address, { from: owner }).should.be.fulfilled;
+      const borrowerAppAddress = await borrower.getBorrowerAppContractAddress({ from: owner });
       borrowerAppAddress.should.be.bignumber.equal(borrowerApp.address);
     });
   });
@@ -104,15 +109,15 @@ contract('Borrower', function (accounts) {
 
     context('when both Auth and BorrowerApp contracts are set', async function () {
       beforeEach(async function () {
-        await borrower.setAuthContractAddress(auth.address);
-        await borrower.setBorrowerAppContractAddress(borrowerApp.address);
+        await borrower.setAuthContractAddress(auth.address, { from: owner });
+        await borrower.setBorrowerAppContractAddress(borrowerApp.address, { from: owner });
       });
 
       it('adds a borrower verifying signature', async function () {
         // authentication mocking
         await auth.mockSetContainingId(borrowerAddress);
         // borrower app registration
-        await borrowerApp.add(someBorrowerApp.id, someBorrowerApp.name);
+        await borrowerApp.add(someBorrowerApp.id, someBorrowerApp.name, { from: owner });
         const { borrowerAppId, v, r, s } = someBorrowerSignature;
         await borrower.add(borrowerAddress, v, r, s, { from: borrowerAppId }).should.be.fulfilled;
       });
@@ -121,7 +126,7 @@ contract('Borrower', function (accounts) {
         // authentication mocking
         await auth.mockSetContainingId(borrowerAddress);
         // borrower app registration
-        await borrowerApp.add(someBorrowerApp.id, someBorrowerApp.name);
+        await borrowerApp.add(someBorrowerApp.id, someBorrowerApp.name, { from: owner });
         const { borrowerAppId, v, r, s } = someBorrowerSignature;
         const events = await eventsIn(borrower.add(borrowerAddress, v, r, s, { from: borrowerAppId }));
 
@@ -135,7 +140,7 @@ contract('Borrower', function (accounts) {
         // authentication mocking
         await auth.mockSetContainingId(borrowerAddress);
         // borrower app registration
-        await borrowerApp.add(someBorrowerApp.id, someBorrowerApp.name);
+        await borrowerApp.add(someBorrowerApp.id, someBorrowerApp.name, { from: owner });
         const { borrowerAppId, v, r, s } = someBorrowerSignature;
         // borrower registration
         await borrower.add(borrowerAddress, v, r, s, { from: borrowerAppId }).should.be.fulfilled;
@@ -145,7 +150,7 @@ contract('Borrower', function (accounts) {
 
       it('reverts on adding an unauthenticated borrower', async function () {
         // borrower app registration
-        await borrowerApp.add(someBorrowerApp.id, someBorrowerApp.name);
+        await borrowerApp.add(someBorrowerApp.id, someBorrowerApp.name, { from: owner });
 
         const { borrowerAppId, v, r, s } = someBorrowerSignature;
         await borrower.add(borrowerAddress, v, r, s, { from: borrowerAppId }).should.be.rejectedWith('Borrower is not authenticated');
@@ -163,8 +168,8 @@ contract('Borrower', function (accounts) {
         // authentication mocking
         await auth.mockSetContainingId(borrowerAddress);
         // borrower app registration
-        await borrowerApp.add(someBorrowerApp.id, someBorrowerApp.name);
-        await borrowerApp.add(otherBorrowerApp.id, otherBorrowerApp.name);
+        await borrowerApp.add(someBorrowerApp.id, someBorrowerApp.name, { from: owner });
+        await borrowerApp.add(otherBorrowerApp.id, otherBorrowerApp.name, { from: owner });
 
         const borrowerWithUnmatchtedBorrowerAppArgs = [
           borrowerAddress, someBorrowerSignature.v, someBorrowerSignature.r, someBorrowerSignature.s, { from: otherBorrowerApp.id },
@@ -194,41 +199,41 @@ contract('Borrower', function (accounts) {
         auth = await Auth.new(contractVersion, { from: owner });
         borrowerApp = await BorrowerApp.new(contractVersion, { from: owner });
 
-        await borrower.setAuthContractAddress(auth.address);
-        await borrower.setBorrowerAppContractAddress(borrowerApp.address);
+        await borrower.setAuthContractAddress(auth.address, { from: owner });
+        await borrower.setBorrowerAppContractAddress(borrowerApp.address, { from: owner });
 
         await auth.mockSetContainingId(borrowerAddress);
 
-        await borrowerApp.add(someBorrowerApp.id, someBorrowerApp.name);
+        await borrowerApp.add(someBorrowerApp.id, someBorrowerApp.name, { from: owner });
 
         const { borrowerAppId, v, r, s } = someBorrowerSignature;
         await borrower.add(borrowerAddress, v, r, s, { from: borrowerAppId });
       });
 
-      it('returns registered borrower with id', async function () {
+      it('gets registered borrower for id', async function () {
         const id = await borrower.get(borrowerAddress);
         id.should.be.equal(borrowerAddress);
       });
 
-      it('returns registered borrower with index', async function () {
-        const id = await borrower.getByIndex(0);
+      it('gets registered borrower with index', async function () {
+        const id = await borrower.getByIndex(0, { from: owner });
         id.should.be.equal(borrowerAddress);
       });
 
-      it('returns how many borrowers are registered', async function () {
-        (await borrower.size()).should.be.bignumber.equal(1);
+      it('gets how many borrowers are registered', async function () {
+        (await borrower.size({ from: owner })).should.be.bignumber.equal(1);
 
         // otherBorrower registration
         await auth.mockSetContainingId(otherBorrowerAddress);
-        await borrowerApp.add(otherBorrowerApp.id, otherBorrowerApp.name);
+        await borrowerApp.add(otherBorrowerApp.id, otherBorrowerApp.name, { from: owner });
         const { borrowerAppId, v, r, s } = otherBorrowerSignature;
         await borrower.add(otherBorrowerAddress, v, r, s, { from: borrowerAppId });
 
-        (await borrower.size()).should.be.bignumber.equal(2);
+        (await borrower.size({ from: owner })).should.be.bignumber.equal(2);
       });
 
-      it('returns all registered borrower ids', async function () {
-        await borrower.getIds().should.eventually.have.bignumber.ordered.members([borrowerAddress]);
+      it('gets all registered borrower ids', async function () {
+        await borrower.getIds({ from: owner }).should.eventually.have.bignumber.ordered.members([borrowerAddress]);
       });
 
       it('reverts on getting borrower with index by non owner', async function () {
@@ -238,20 +243,15 @@ contract('Borrower', function (accounts) {
       it('reverts on getting all borrower ids by non owner', async function () {
         await borrower.getIds({ from: nonOwner }).should.be.rejectedWith('revert');
       });
-      /*
-      */
     });
 
     it('reverts on getting unregistered borrower', async function () {
-      await borrower.get(borrowerAddress).should.be.rejectedWith('Borrower is not found');
+      await borrower.get(borrowerAddress, { from: nonOwner }).should.be.rejectedWith('Borrower is not found');
     });
 
     it('reverts on getting unregistered borrower with index', async function () {
       await borrower.getByIndex(0, { from: nonOwner }).should.be.rejectedWith('revert');
-      await borrower.getByIndex(0).should.be.rejectedWith('borrower index out of range');
+      await borrower.getByIndex(0, { from: owner }).should.be.rejectedWith('Borrower index is out of range');
     });
-    /*
-    */
   });
-
 });
