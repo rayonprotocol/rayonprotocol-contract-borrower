@@ -7,7 +7,7 @@ const BigNumber = web3.BigNumber;
  * @param {*} chai
  * @param {*} utils
  */
-export default function assertwithinTimeTolerance (chai, utils) {
+export default function assertWithinTimeTolerance (chai, utils) {
   const Assertion = chai.Assertion;
   Assertion.addMethod('withinTimeTolerance',
     /**

@@ -3,8 +3,10 @@ pragma solidity ^0.4.23;
 import "../../rayonprotocol-contract-common/contracts/RayonBase.sol";
 import "../../rayonprotocol-contract-kyc/contracts/Auth.sol";
 import "./BorrowerApp.sol";
+import "./contractReference/UsesAuth.sol";
+import "./contractReference/UsesBorrowerApp.sol";
 
-contract Borrower is RayonBase {
+contract Borrower is UsesAuth, UsesBorrowerApp, RayonBase{
     struct BorrowerEntry{
         address id;
         uint256 index;
@@ -13,10 +15,6 @@ contract Borrower is RayonBase {
 
     mapping(address => BorrowerEntry) internal borrowerMap;
     address[] internal borrowerList;
-    
-    
-    address internal authContractAddress;
-    address internal borrowerAppContractAddress;
 
     // constructor
     constructor(uint16 version) RayonBase("Borrower", version) public {}
@@ -24,31 +22,6 @@ contract Borrower is RayonBase {
     // Event defination
     event LogBorrowerAdded(address indexed id);
     event LogBorrowerUpdated(address indexed id);
-
-
-    /**
-     * @dev Modifier to make a function callable only when both authContractAddress and borrowerAppContractAddress are set.
-     */
-    modifier onlyWhenReady() {
-        require(
-            authContractAddress != address(0) && borrowerAppContractAddress != address(0),
-            "Borrower registration is not ready: both authContractAddress and borrowerAppContractAddress must be set"
-        );
-        _;
-    }
-
-    /**
-     * @dev Modifier to make a function callable only when `msg.sender` is borrower app.
-     */
-    modifier onlyBorrowerApp()  {
-        // borrower app registration check
-        BorrowerApp borrowerAppContract = BorrowerApp(borrowerAppContractAddress);
-        require(
-            borrowerAppContract.contains(msg.sender),
-            "Borrower app for borrower is not registered: borrower only can be registered with registered borrower app"
-        );
-        _;
-    }
 
     function toBytes(address a) public view returns (bytes b){
         assembly {
@@ -65,19 +38,21 @@ contract Borrower is RayonBase {
         return verifiedAddress == _signedAddress;
     }
 
-    function add(address _borrowerId, uint8 _v, bytes32 _r, bytes32 _s) public onlyWhenReady onlyBorrowerApp {
+    function add(address _borrowerId, uint8 _v, bytes32 _r, bytes32 _s) public whenBorrowerAppContractIsSet whenAuthContractIsSet {
         address borrowerAppId = msg.sender;
-
         BorrowerEntry storage entry = borrowerMap[_borrowerId];
         require(!_contains(entry), "Borrower is already registered");
-
-        // borrower authencation check
-        Auth authContract = Auth(authContractAddress);
+        
+        // borrower app registration check
         require(
-            authContract.contains(_borrowerId),
+            BorrowerApp(borrowerAppContractAddress).contains(borrowerAppId),
+            "msg.sender is not registred borrower app: only registered borrower app can add a borrower"
+        );
+        // borrower authencation check
+        require(
+            Auth(authContractAddress).contains(_borrowerId),
             "Borrower is not authenticated: borrower must be authenticated before registered"
         );
-
         // signature verification
         require(_verifySignature(borrowerAppId, _borrowerId, _v, _r, _s), "Signature can not be verified");
 
@@ -93,6 +68,11 @@ contract Borrower is RayonBase {
         require(_contains(entry), "Borrower is not found");
         // now it only gets id
         return entry.id;
+    }
+
+    function contains(address _id) public view returns (bool) {
+        BorrowerEntry storage entry = borrowerMap[_id];
+        return _contains(entry);
     }
 
     function getByIndex(uint256 _index) public view onlyOwner returns (address){
@@ -117,21 +97,4 @@ contract Borrower is RayonBase {
     function _isInRange(uint256 _index) private view returns (bool) {
         return (_index >= 0) && (_index < borrowerList.length);
     }
-
-    function setAuthContractAddress(address _contractAddress) public onlyOwner {
-        authContractAddress = _contractAddress;
-    }
-
-    function getAuthContractAddress() public view onlyOwner returns (address) {
-        return authContractAddress;
-    }
-    
-    function setBorrowerAppContractAddress(address _contractAddress) public onlyOwner {
-        borrowerAppContractAddress = _contractAddress;
-    }
-
-    function getBorrowerAppContractAddress() public view onlyOwner returns (address) {
-        return borrowerAppContractAddress;
-    }
-
 }

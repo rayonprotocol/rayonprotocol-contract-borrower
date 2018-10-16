@@ -1,5 +1,5 @@
 import eventsIn from './helpers/eventsIn';
-import assertwithinTimeTolerance from './helpers/assertwithinTimeTolerance';
+import assertWithinTimeTolerance from './helpers/assertWithinTimeTolerance';
 import { latestTime } from 'openzeppelin-solidity/test/helpers/latestTime';
 const BorrowerApp = artifacts.require('./BorrowerApp.sol');
 const BigNumber = web3.BigNumber;
@@ -7,7 +7,7 @@ const BigNumber = web3.BigNumber;
 require('chai')
   .use(require('chai-bignumber')(BigNumber))
   .use(require('chai-as-promised'))
-  .use(assertwithinTimeTolerance)
+  .use(assertWithinTimeTolerance)
   .should();
 
 const contractVersion = 1;
