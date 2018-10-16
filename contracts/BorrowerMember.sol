@@ -53,7 +53,7 @@ contract BorrowerMember is UsesBorrowerApp, UsesBorrower, RayonBase {
             BorrowerApp(borrowerAppContractAddress).contains(borrowerAppId),
             "msg.sender is not registred borrower app: only registered borrower app can join itself with a borrower"
         );
-        require(Borrower(borrowerContractAddress).contains(_borrowerId), "Borrower is not be found");
+        require(Borrower(borrowerContractAddress).contains(_borrowerId), "Borrower is not found");
         // signature verification
         require(_verifySignature(borrowerAppId, _borrowerId, _v, _r, _s), "Signature can not be verified");
 
@@ -83,11 +83,11 @@ contract BorrowerMember is UsesBorrowerApp, UsesBorrower, RayonBase {
         return entry.joinedTime;
     }
 
-    function getJoinedBorrowerCount(address _borrowerAppId) public view onlyOwner returns (uint) {
+    function getJoinedBorrowerCount(address _borrowerAppId) public view returns (uint) {
         return borrowerAppToBorrowerListMap[_borrowerAppId].length;
     }
 
-    function getJoinedBorrowerId(address _borrowerAppId, uint _index) public view onlyOwner returns (address) {
+    function getJoinedBorrowerId(address _borrowerAppId, uint _index) public view returns (address) {
         bytes32 key = borrowerAppToBorrowerListMap[_borrowerAppId][_index];
         require(_exists(key), "Join is not found at index");
 
@@ -95,11 +95,11 @@ contract BorrowerMember is UsesBorrowerApp, UsesBorrower, RayonBase {
         return entry.borrowerId;
     }
 
-    function getJoinedBorrowerAppCount(address _borrowerId) public view onlyOwner returns (uint) {
+    function getJoinedBorrowerAppCount(address _borrowerId) public view returns (uint) {
         return borrowerToBorrowerAppListMap[_borrowerId].length;
     }
 
-    function getJoinedBorrowerAppId(address _borrowerId, uint _index) public view onlyOwner returns (address) {
+    function getJoinedBorrowerAppId(address _borrowerId, uint _index) public view returns (address) {
         bytes32 key = borrowerToBorrowerAppListMap[_borrowerId][_index];
         require(_exists(key), "Join is not found at index");
 

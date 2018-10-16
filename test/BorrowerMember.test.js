@@ -112,7 +112,7 @@ contract('BorrowerMember', function (accounts) {
         await borrowerApp.mockSetContainingId(someBorrowerAppAdress);
 
         const { appId, v, r, s } = someBorrowerSignature;
-        await borrowerMember.join(borrowerAddress, v, r, s, { from: appId }).should.be.rejectedWith('Borrower is not be found');
+        await borrowerMember.join(borrowerAddress, v, r, s, { from: appId }).should.be.rejectedWith('Borrower is not found');
       });
 
       it('reverts on joining an unregistred borrower app and an borrower', async function () {
@@ -202,13 +202,6 @@ contract('BorrowerMember', function (accounts) {
       joinedTime.should.be.withinTimeTolerance(currentTime);
     });
 
-    it('reverts on getting unjoined borrower member', async function () {
-      await borrowerMember.getBorrowerMember(someBorrowerAppAdress, 0)
-        .should.be.rejectedWith('Join of borrowerApp and borrower is not found');
-      await borrowerMember.getBorrowerMember(0, borrowerAddress)
-        .should.be.rejectedWith('Join of borrowerApp and borrower is not found');
-    });
-
     it('gets the count of borrowers joined with borrower app', async function () {
       (await borrowerMember.getJoinedBorrowerCount(someBorrowerAppAdress, { from: owner }))
         .should.be.bignumber.equal(1);
@@ -224,19 +217,9 @@ contract('BorrowerMember', function (accounts) {
         .should.be.bignumber.equal(1);
     });
 
-    it('reverts on getting the count of borrowers joined with borrower app', async function () {
-      await borrowerMember.getJoinedBorrowerCount(someBorrowerAppAdress).should.be.rejectedWith('revert');
-      await borrowerMember.getJoinedBorrowerCount(someBorrowerAppAdress, { from: nonOwner }).should.be.rejectedWith('revert');
-    });
-
     it('gets borrower id at index of joined borrower list for borrower app', async function () {
       const borrowerId = await borrowerMember.getJoinedBorrowerId(someBorrowerAppAdress, 0, { from: owner });
       borrowerId.should.be.equal(borrowerAddress);
-    });
-
-    it('reverts on getting borrower id at index of joined borrower list for borrower app', async function () {
-      await borrowerMember.getJoinedBorrowerId(someBorrowerAppAdress, 0).should.be.rejectedWith('revert');
-      await borrowerMember.getJoinedBorrowerId(someBorrowerAppAdress, 0, { from: nonOwner }).should.be.rejectedWith('revert');
     });
 
     it('gets the count of borrower apps joined with borrower', async function () {
@@ -254,19 +237,9 @@ contract('BorrowerMember', function (accounts) {
         .should.be.bignumber.equal(1);
     });
 
-    it('reverts on getting the count of borrower apps joined with borrower', async function () {
-      await borrowerMember.getJoinedBorrowerAppCount(borrowerAddress).should.be.rejectedWith('revert');
-      await borrowerMember.getJoinedBorrowerAppCount(borrowerAddress, { from: nonOwner }).should.be.rejectedWith('revert');
-    });
-
     it('gets borrower app id at index of joined borrower app list for borrower', async function () {
       const borrowerAppId = await borrowerMember.getJoinedBorrowerAppId(borrowerAddress, 0, { from: owner });
       borrowerAppId.should.be.equal(someBorrowerAppAdress);
-    });
-
-    it('reverts on getting borrower app id at index of joined borrower app list for borrower', async function () {
-      await borrowerMember.getJoinedBorrowerAppId(borrowerAddress, 0).should.be.rejectedWith('revert');
-      await borrowerMember.getJoinedBorrowerAppId(borrowerAddress, 0, { from: nonOwner }).should.be.rejectedWith('revert');
     });
   });
 });
