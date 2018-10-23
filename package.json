@@ -1,8 +1,8 @@
 {
-  "name": "rayonprotocol-contract-borrower-app",
+  "name": "rayonprotocol-contract-borrower",
   "version": "1.0.0",
   "main": "index.js",
-  "repository": "https://github.com/rayonprotocol/rayonprotocol-contract-borrower-app.git",
+  "repository": "https://github.com/rayonprotocol/rayonprotocol-contract-borrower.git",
   "author": "RayonProtocol",
   "license": "MIT",
   "scripts": {
