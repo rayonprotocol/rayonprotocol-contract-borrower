@@ -23,21 +23,6 @@ contract Borrower is UsesAuth, UsesBorrowerApp, RayonBase{
     event LogBorrowerAdded(address indexed id);
     event LogBorrowerUpdated(address indexed id);
 
-    function toBytes(address a) public view returns (bytes b){
-        assembly {
-            let m := mload(0x40)
-            mstore(add(m, 20), xor(0x140000000000000000000000000000000000000000, a))
-            mstore(0x40, add(m, 52))
-            b := m
-        }
-    }
-
-    function _verifySignature(address _borrowerAppId, address _signedAddress, uint8 _v, bytes32 _r, bytes32 _s) private view returns (bool) {
-        bytes32 borrowerAppIdHash = (keccak256(toBytes(_borrowerAppId)));
-        address verifiedAddress = ecrecover(borrowerAppIdHash, _v, _r, _s);
-        return verifiedAddress == _signedAddress;
-    }
-
     function add(address _borrowerId, uint8 _v, bytes32 _r, bytes32 _s) public whenBorrowerAppContractIsSet whenAuthContractIsSet {
         address borrowerAppId = msg.sender;
         BorrowerEntry storage entry = borrowerMap[_borrowerId];
@@ -54,7 +39,8 @@ contract Borrower is UsesAuth, UsesBorrowerApp, RayonBase{
             "Borrower is not authenticated: borrower must be authenticated before registered"
         );
         // signature verification
-        require(_verifySignature(borrowerAppId, _borrowerId, _v, _r, _s), "Signature can not be verified");
+        bytes32 borrowerAppIdHash = keccak256(_addressToBytes(borrowerAppId));
+        require(_verifySignature(borrowerAppIdHash, _borrowerId, _v, _r, _s), "Signature can not be verified");
 
         entry.id = _borrowerId;
         entry.updatedTime = block.timestamp;
