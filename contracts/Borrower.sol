@@ -76,7 +76,7 @@ contract Borrower is UsesAuth, UsesBorrowerApp, RayonBase{
         return borrowerList.length;
     }
 
-    function _contains(BorrowerEntry _entry) private returns (bool) {
+    function _contains(BorrowerEntry _entry) private pure returns (bool) {
         return _entry.id != address(0);
     }
 
