@@ -113,7 +113,7 @@ contract('Borrower', function (accounts) {
         await auth.mockSetContainingId(borrowerAddress);
 
         const { borrowerAppId, v, r, s } = someBorrowerSignature;
-        await borrower.add(borrowerAddress, v, r, s, { from: borrowerAppId }).should.be.rejectedWith('msg.sender is not registred borrower app');
+        await borrower.add(borrowerAddress, v, r, s, { from: borrowerAppId }).should.be.rejectedWith('msg.sender is not registerd borrower app');
       });
 
       it('reverts on adding an borrower with invalid signature', async function () {

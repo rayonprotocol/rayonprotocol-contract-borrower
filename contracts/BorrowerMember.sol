@@ -35,7 +35,7 @@ contract BorrowerMember is UsesBorrowerApp, UsesBorrower, RayonBase {
         // referential integrity validation
         require(
             BorrowerApp(borrowerAppContractAddress).contains(borrowerAppId),
-            "msg.sender is not registred borrower app: only registered borrower app can join itself with a borrower"
+            "msg.sender is not registerd borrower app: only registered borrower app can join itself with a borrower"
         );
         require(Borrower(borrowerContractAddress).contains(_borrowerId), "Borrower is not found");
         // signature verification

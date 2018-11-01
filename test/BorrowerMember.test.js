@@ -120,7 +120,7 @@ contract('BorrowerMember', function (accounts) {
         await borrower.mockSetContainingId(borrowerAddress);
 
         const { appId, v, r, s } = someBorrowerSignature;
-        await borrowerMember.join(borrowerAddress, v, r, s, { from: appId }).should.be.rejectedWith('msg.sender is not registred borrower app');
+        await borrowerMember.join(borrowerAddress, v, r, s, { from: appId }).should.be.rejectedWith('msg.sender is not registerd borrower app');
       });
 
       it('reverts on joining with invalid signature', async function () {

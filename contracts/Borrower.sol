@@ -31,7 +31,7 @@ contract Borrower is UsesAuth, UsesBorrowerApp, RayonBase{
         // borrower app registration check
         require(
             BorrowerApp(borrowerAppContractAddress).contains(borrowerAppId),
-            "msg.sender is not registred borrower app: only registered borrower app can add a borrower"
+            "msg.sender is not registerd borrower app: only registered borrower app can add a borrower"
         );
         // borrower authencation check
         require(
