@@ -121,5 +121,7 @@ typings/
 
 # Serverless directories
 
+# truffle artifacts
+/build
 
 # End of https://www.gitignore.io/api/node,solidity
