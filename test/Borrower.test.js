@@ -1,4 +1,5 @@
 import eventsIn from './helpers/eventsIn';
+import { latestTime } from 'openzeppelin-solidity/test/helpers/latestTime';
 const BorrowerApp = artifacts.require('./BorrowerApp.sol');
 const Borrower = artifacts.require('./Borrower.sol');
 const Auth = artifacts.require('./AuthMock.sol');
@@ -155,6 +156,7 @@ contract('Borrower', function (accounts) {
     context('when a borrower is registered', async function () {
       let auth;
       let borrowerApp;
+      let currentTime;
 
       beforeEach(async function () {
         auth = await Auth.new(contractVersion, { from: owner });
@@ -164,21 +166,25 @@ contract('Borrower', function (accounts) {
         await borrower.setBorrowerAppContractAddress(borrowerApp.address, { from: owner });
 
         await auth.mockSetContainingId(borrowerAddress);
-
-        await borrowerApp.add(someBorrowerApp.id, someBorrowerApp.name, { from: owner });
+        [currentTime] = await Promise.all([
+          latestTime(),
+          borrowerApp.add(someBorrowerApp.id, someBorrowerApp.name, { from: owner }),
+        ]);
 
         const { borrowerAppId, v, r, s } = someBorrowerSignature;
         await borrower.add(borrowerAddress, v, r, s, { from: borrowerAppId });
       });
 
       it('gets registered borrower for id', async function () {
-        const id = await borrower.get(borrowerAddress);
+        const [id, updatedTime] = await borrower.get(borrowerAddress);
         id.should.be.equal(borrowerAddress);
+        updatedTime.should.be.withinTimeTolerance(currentTime);
       });
 
       it('gets registered borrower with index', async function () {
-        const id = await borrower.getByIndex(0, { from: owner });
+        const [id, updatedTime] = await borrower.getByIndex(0, { from: owner });
         id.should.be.equal(borrowerAddress);
+        updatedTime.should.be.withinTimeTolerance(currentTime);
       });
 
       it('gets how many borrowers are registered', async function () {

@@ -49,11 +49,11 @@ contract Borrower is UsesAuth, UsesBorrowerApp, RayonBase{
     }
 
     
-    function get(address _id) public view returns (address) {
+    function get(address _id) public view returns (address, uint256) {
         BorrowerEntry storage entry = borrowerMap[_id];
         require(_contains(entry), "Borrower is not found");
         // now it only gets id
-        return entry.id;
+        return (entry.id, entry.updatedTime);
     }
 
     function contains(address _id) public view returns (bool) {
@@ -61,7 +61,7 @@ contract Borrower is UsesAuth, UsesBorrowerApp, RayonBase{
         return _contains(entry);
     }
 
-    function getByIndex(uint256 _index) public view onlyOwner returns (address){
+    function getByIndex(uint256 _index) public view onlyOwner returns (address, uint){
         require(_isInRange(_index), "Borrower index is out of range");
 
         address id = borrowerList[_index];
