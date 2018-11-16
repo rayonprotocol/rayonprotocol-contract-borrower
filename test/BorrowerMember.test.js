@@ -180,16 +180,31 @@ contract('BorrowerMember', function (accounts) {
       ]);
     });
 
-    it('gets the total count of joined member', async function () {
+    it('gets all members by getting count of member list and accessing with index', async function () {
       (await borrowerMember.getJoinedTotalCount({ from: owner })).should.be.bignumber.equal(1);
 
       // join otherBorrowerAddress
       await borrower.mockSetContainingId(otherBorrowerAddress);
       await borrowerApp.mockSetContainingId(otherBorrowerAppAdress);
       const { v, r, s } = otherBorrowerSignature;
-      await borrowerMember.join(otherBorrowerAddress, v, r, s, { from: otherBorrowerAppAdress });
+      const [otherBorrowerJoinedTime] = await Promise.all([
+        latestTime(),
+        borrowerMember.join(otherBorrowerAddress, v, r, s, { from: otherBorrowerAppAdress }),
+      ]);
 
       (await borrowerMember.getJoinedTotalCount({ from: owner })).should.be.bignumber.equal(2);
+
+      const expectedMembers = [
+        { borrower: borrowerAddress, borrowerApp: someBorrowerAppAdress, joinedTime: currentTime },
+        { borrower: otherBorrowerAddress, borrowerApp: otherBorrowerAppAdress, joinedTime: otherBorrowerJoinedTime },
+      ];
+      const joinedMembers = await Promise.all([0, 1].map(index => borrowerMember.getBorrowerMemberByIndex(index, { from: owner })));
+      joinedMembers.forEach(([borrowerAddress, borrowerApp, joinedTime], correspondingIndex) => {
+        const expectedMember = expectedMembers[correspondingIndex];
+        borrowerAddress.should.be.equal(expectedMember.borrower);
+        borrowerApp.should.be.equal(expectedMember.borrowerApp);
+        joinedTime.should.be.withinTimeTolerance(expectedMember.joinedTime);
+      });
     });
 
     it('reverts on getting the total count of joined member', async function () {

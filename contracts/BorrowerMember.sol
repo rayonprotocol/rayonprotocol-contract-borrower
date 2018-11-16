@@ -59,6 +59,14 @@ contract BorrowerMember is UsesBorrowerApp, UsesBorrower, RayonBase {
         return entryKeyList.length;
     }
 
+    function getBorrowerMemberByIndex(uint _index) public view onlyOwner returns (address, address, uint256) {
+        bytes32 key = entryKeyList[_index];
+        require(_exists(key), "Join is not found at index");
+
+        BorrowerMemberEntry storage entry = entryMap[key];
+        return (entry.borrowerId, entry.borrowerAppId, entry.joinedTime);
+    }
+
     function getBorrowerMember(address _borrowerAppId, address _borrowerId) public view returns (uint256) {
         require(isJoined(_borrowerAppId, _borrowerId), "Join of borrowerApp and borrower is not found");
         bytes32 key = borrowerAppToBorrowerMap[_borrowerAppId][_borrowerId];
