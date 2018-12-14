@@ -19,6 +19,8 @@ contract('BorrowerScore', function (accounts) {
 
   let borrowerScore;
 
+  const thirtyDayInSeconds = (30 * 60 * 60 * 24);
+
   beforeEach(async function () {
     borrowerScore = await BorrowerScore.new(contractVersion, { from: owner });
   });
@@ -34,7 +36,7 @@ contract('BorrowerScore', function (accounts) {
     it('emits an event on adding score', async function () {
       const score = new BigNumber(29);
       const blockTimestamp = await latestTime();
-      const period = new BigNumber(Math.floor(blockTimestamp / (30 * 60 * 60 * 24)));
+      const period = new BigNumber(Math.floor(blockTimestamp / thirtyDayInSeconds));
       const events = await eventsIn(
         borrowerScore.add(someBorrowerAppAdress, borrowerAddress, score, { from: owner }),
       );
@@ -56,28 +58,27 @@ contract('BorrowerScore', function (accounts) {
   });
 
   describe('Retrieve', async function () {
-    let score, period;
+    let score, period, blockTimestamp;
 
     context('when score is added', async function () {
       beforeEach(async function () {
         score = new BigNumber(29);
-        const blockTimestamp = await latestTime();
-        console.log({ blockTimestamp });
+        blockTimestamp = await latestTime();
         period = new BigNumber(Math.floor(blockTimestamp / (30 * 60 * 60 * 24)));
         await borrowerScore.add(someBorrowerAppAdress, borrowerAddress, score, { from: owner });
       });
 
       it('gets correct score of periods', async function () {
-        (await borrowerScore.get(someBorrowerAppAdress, borrowerAddress, period)).should.be.bignumber.equal(score);
+        (await borrowerScore.get(someBorrowerAppAdress, borrowerAddress, blockTimestamp)).should.be.bignumber.equal(score);
 
-        const prevPeriod = period - 1;
-        (await borrowerScore.get(someBorrowerAppAdress, borrowerAddress, prevPeriod)).should.be.bignumber.equal(0);
+        const prevPeriodTimestamp = blockTimestamp - thirtyDayInSeconds;
+        (await borrowerScore.get(someBorrowerAppAdress, borrowerAddress, prevPeriodTimestamp)).should.be.bignumber.equal(0);
 
-        const nextPeriod = period + 1;
-        (await borrowerScore.get(someBorrowerAppAdress, borrowerAddress, nextPeriod)).should.be.bignumber.equal(0);
+        const nextPeriodTimestamp = blockTimestamp + thirtyDayInSeconds;
+        (await borrowerScore.get(someBorrowerAppAdress, borrowerAddress, nextPeriodTimestamp)).should.be.bignumber.equal(0);
 
         await borrowerScore.add(someBorrowerAppAdress, borrowerAddress, score, { from: owner });
-        (await borrowerScore.get(someBorrowerAppAdress, borrowerAddress, period)).should.be.bignumber.equal(score.mul(2));
+        (await borrowerScore.get(someBorrowerAppAdress, borrowerAddress, blockTimestamp)).should.be.bignumber.equal(score.mul(2));
       });
     });
   });

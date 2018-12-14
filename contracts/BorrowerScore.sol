@@ -18,15 +18,15 @@ contract BorrowerScore is RayonBase {
      * @dev accumulate borrower scores by period (30 days)
      */
     function add(address _borrowerAppId, address _borrowerId, uint256 _score) public onlyOwner {
-        address borrowerAppId = msg.sender;
         uint256 period = block.timestamp.div(30 days);
         bytes32 key = keccak256(abi.encodePacked(period, _borrowerAppId, _borrowerId));
         scoreMap[key] = scoreMap[key].add(_score);
         LogBorrowerScoreAdded(_borrowerAppId, _borrowerId, period, _score);
     }
 
-    function get(address _borrowerAppId, address _borrowerId, uint256 _period) public view returns (uint256) {
-        bytes32 key = keccak256(abi.encodePacked(_period, _borrowerAppId, _borrowerId));
+    function get(address _borrowerAppId, address _borrowerId, uint256 _timestamp) public view returns (uint256) {
+        uint256 period = _timestamp.div(30 days);
+        bytes32 key = keccak256(abi.encodePacked(period, _borrowerAppId, _borrowerId));
         return scoreMap[key];
     }
 }
